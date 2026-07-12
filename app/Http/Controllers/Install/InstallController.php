@@ -80,20 +80,20 @@ class InstallController extends Controller
         $pass = $request->input('db_password', '');
         $mode = session('install_mode', 'demo');
 
-        // 1. Connect to MySQL
+        // 1. Connect directly to the database
         try {
-            $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass);
+            $pdo = new \PDO("mysql:host={$host};port={$port};dbname={$dbName}", $user, $pass);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         } catch (\Exception $e) {
-            return back()->withErrors(['db_error' => 'Connection failed: ' . $e->getMessage()]);
-        }
-
-        // 2. Create DB
-        try {
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $pdo->exec("USE `{$dbName}`");
-        } catch (\Exception $e) {
-            return back()->withErrors(['db_error' => 'Database creation failed: ' . $e->getMessage()]);
+            // If database doesn't exist, try to create it
+            try {
+                $pdo = new \PDO("mysql:host={$host};port={$port}", $user, $pass);
+                $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+                $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                $pdo->exec("USE `{$dbName}`");
+            } catch (\Exception $e2) {
+                return back()->withErrors(['db_error' => 'Cannot connect to database "' . $dbName . '". Make sure it exists. Error: ' . $e2->getMessage()]);
+            }
         }
 
         // 3. Create tables one by one
