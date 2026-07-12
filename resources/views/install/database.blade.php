@@ -102,12 +102,14 @@ async function startInstall() {
 
     // Get base URL dynamically (works with artisan serve AND XAMPP subfolder)
     var baseUrl = document.querySelector('meta[name="base-url"]')?.content || '';
+    // Remove trailing slash
+    baseUrl = baseUrl.replace(/\/$/, '');
 
     while (true) {
         updateProgress(step, total, 'Installing...');
 
         try {
-            var response = await fetch(baseUrl + '/api/install/run-step', {
+            var response = await fetch(baseUrl + '/install-api.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -119,7 +121,8 @@ async function startInstall() {
                     db_port: port,
                     db_name: name,
                     db_user: user,
-                    db_password: pass
+                    db_password: pass,
+                    mode: '{{ $mode }}'
                 })
             });
 
@@ -148,7 +151,7 @@ async function startInstall() {
                 document.getElementById('stepMessage').textContent = 'Installation complete!';
                 document.getElementById('progressBar').style.width = '100%';
                 setTimeout(function() {
-                    window.location.href = data.redirect;
+                    window.location.href = baseUrl + data.redirect;
                 }, 1000);
                 return;
             }
