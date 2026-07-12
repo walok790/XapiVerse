@@ -8,20 +8,20 @@ use App\Http\Controllers\Admin;
 
 /*
 |--------------------------------------------------------------------------
-| Installation Routes (protected globally by CheckInstalled middleware)
+| Installation Routes
+| Flow: Requirements → Permissions → Mode → Database → Account → Login
 |--------------------------------------------------------------------------
 */
 Route::prefix('install')->group(function () {
     Route::get('/', [InstallController::class, 'requirements'])->name('install.requirements');
     Route::get('/permissions', [InstallController::class, 'permissions'])->name('install.permissions');
+    Route::get('/mode', [InstallController::class, 'mode'])->name('install.mode');
+    Route::post('/mode', [InstallController::class, 'saveMode'])->name('install.save-mode');
     Route::get('/database', [InstallController::class, 'database'])->name('install.database');
     Route::post('/database', [InstallController::class, 'saveDatabase'])->name('install.save-database');
     Route::get('/database/download-sql', [InstallController::class, 'downloadSql'])->name('install.download-sql');
-    Route::get('/mode', [InstallController::class, 'mode'])->name('install.mode');
-    Route::post('/mode', [InstallController::class, 'saveMode'])->name('install.save-mode');
-    Route::get('/accounts', [InstallController::class, 'accounts'])->name('install.accounts');
-    Route::post('/accounts', [InstallController::class, 'saveAccounts'])->name('install.save-accounts');
-    Route::get('/complete', [InstallController::class, 'complete'])->name('install.complete');
+    Route::get('/account', [InstallController::class, 'account'])->name('install.account');
+    Route::post('/account', [InstallController::class, 'saveAccount'])->name('install.save-account');
 });
 
 /*

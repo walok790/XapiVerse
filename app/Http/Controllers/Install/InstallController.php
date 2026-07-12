@@ -4,12 +4,8 @@ namespace App\Http\Controllers\Install;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Artisan;
-use App\Models\User;
-use App\Models\Setting;
 
 class InstallController extends Controller
 {
@@ -63,15 +59,38 @@ class InstallController extends Controller
     }
 
     /**
-     * Step 3: Database configuration form
+     * Step 3: Choose mode (BEFORE database)
      */
-    public function database()
+    public function mode()
     {
-        return view('install.database');
+        return view('install.mode');
     }
 
     /**
-     * Step 3: Connect to database and import SQL tables
+     * Step 3: Save mode to session
+     */
+    public function saveMode(Request $request)
+    {
+        $request->validate([
+            'install_mode' => 'required|in:business,demo',
+        ]);
+
+        session(['install_mode' => $request->input('install_mode')]);
+
+        return redirect()->route('install.database');
+    }
+
+    /**
+     * Step 4: Database setup form
+     */
+    public function database()
+    {
+        $mode = session('install_mode', 'demo');
+        return view('install.database', compact('mode'));
+    }
+
+    /**
+     * Step 4: Connect DB, import tables, import demo if demo mode
      */
     public function saveDatabase(Request $request)
     {
@@ -88,9 +107,9 @@ class InstallController extends Controller
         $dbName = $request->input('db_name');
         $username = $request->input('db_user');
         $password = $request->input('db_password', '');
-        $isManual = $request->boolean('manual_import');
+        $mode = session('install_mode', 'demo');
 
-        // Step 1: Test connection (without selecting database first)
+        // 1. Connect to MySQL server
         try {
             $pdo = new \PDO(
                 "mysql:host={$host};port={$port}",
@@ -99,53 +118,42 @@ class InstallController extends Controller
                 [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
             );
         } catch (\PDOException $e) {
-            return back()->withErrors(['db_error' => 'Cannot connect to MySQL server: ' . $e->getMessage()]);
+            return back()->withErrors(['db_error' => 'Cannot connect to MySQL: ' . $e->getMessage()]);
         }
 
-        // Step 2: Create database if it doesn't exist
+        // 2. Create database if not exists
         try {
             $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        } catch (\PDOException $e) {
-            return back()->withErrors(['db_error' => 'Cannot create database: ' . $e->getMessage()]);
-        }
-
-        // Step 3: Connect to the database
-        try {
             $pdo->exec("USE `{$dbName}`");
         } catch (\PDOException $e) {
-            return back()->withErrors(['db_error' => 'Cannot select database: ' . $e->getMessage()]);
+            return back()->withErrors(['db_error' => 'Cannot create/select database: ' . $e->getMessage()]);
         }
 
-        // Step 4: Import tables (skip if manual import - tables should already exist)
-        if (!$isManual) {
-            try {
-                $sqlFile = base_path('database/sql/tables.sql');
-                if (!File::exists($sqlFile)) {
-                    return back()->withErrors(['db_error' => 'SQL file not found: database/sql/tables.sql']);
-                }
+        // 3. Import tables SQL
+        try {
+            $sqlFile = base_path('database/sql/tables.sql');
+            $sql = File::get($sqlFile);
+            $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+            $pdo->exec($sql);
+        } catch (\PDOException $e) {
+            return back()->withErrors(['db_error' => 'Table import failed: ' . $e->getMessage()]);
+        }
 
-                $sql = File::get($sqlFile);
-
-                // Execute multi-statement SQL properly
-                // PDO::exec can handle multiple statements when using MySQL
-                $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
-                $pdo->exec($sql);
-            } catch (\PDOException $e) {
-                return back()->withErrors(['db_error' => 'SQL import failed: ' . $e->getMessage()]);
-            }
-        } else {
-            // Verify tables exist for manual import
+        // 4. If DEMO mode → import demo data
+        if ($mode === 'demo') {
             try {
-                $result = $pdo->query("SHOW TABLES LIKE 'users'");
-                if ($result->rowCount() === 0) {
-                    return back()->withErrors(['db_error' => 'Tables not found! Please import the SQL file first in phpMyAdmin.']);
-                }
+                $demoFile = base_path('database/sql/demo_data.sql');
+                $demoSql = File::get($demoFile);
+                // Replace password placeholder with real bcrypt hash
+                $hash = password_hash('password', PASSWORD_BCRYPT, ['cost' => 12]);
+                $demoSql = str_replace('$2y$12$YourHashWillBeReplacedByInstaller', $hash, $demoSql);
+                $pdo->exec($demoSql);
             } catch (\PDOException $e) {
-                return back()->withErrors(['db_error' => 'Cannot verify tables: ' . $e->getMessage()]);
+                return back()->withErrors(['db_error' => 'Demo data import failed: ' . $e->getMessage()]);
             }
         }
 
-        // Step 5: Update .env with database settings
+        // 5. Save DB credentials to .env
         $this->setEnvValue('DB_CONNECTION', 'mysql');
         $this->setEnvValue('DB_HOST', $host);
         $this->setEnvValue('DB_PORT', $port);
@@ -153,8 +161,18 @@ class InstallController extends Controller
         $this->setEnvValue('DB_USERNAME', $username);
         $this->setEnvValue('DB_PASSWORD', $password);
         $this->setEnvValue('SESSION_DRIVER', 'database');
+        $this->setEnvValue('CACHE_STORE', 'database');
+        $this->setEnvValue('APP_MODE', $mode);
 
-        return redirect()->route('install.mode');
+        // 6. If DEMO → installation done, mark installed, redirect to login
+        if ($mode === 'demo') {
+            $this->setEnvValue('APP_NAME', '"XapiVerse Demo"');
+            $this->markInstalled($mode);
+            return redirect('/admin/login');
+        }
+
+        // 7. If BUSINESS → go to account creation
+        return redirect()->route('install.account');
     }
 
     /**
@@ -162,225 +180,102 @@ class InstallController extends Controller
      */
     public function downloadSql()
     {
-        $sqlFile = base_path('database/sql/tables.sql');
-        return response()->download($sqlFile, 'xapiverse_tables.sql');
+        return response()->download(base_path('database/sql/tables.sql'), 'xapiverse_tables.sql');
     }
 
     /**
-     * Step 4: Choose installation mode (Business or Demo)
+     * Step 5 (Business only): Create super admin account
      */
-    public function mode()
-    {
-        return view('install.mode');
-    }
-
-    /**
-     * Step 4: Save mode selection
-     */
-    public function saveMode(Request $request)
-    {
-        $request->validate([
-            'install_mode' => 'required|in:business,demo',
-        ]);
-
-        $mode = $request->input('install_mode');
-        session(['install_mode' => $mode]);
-
-        if ($mode === 'demo') {
-            return $this->setupDemoMode();
-        }
-
-        return redirect()->route('install.accounts');
-    }
-
-    /**
-     * Setup demo mode - import demo SQL data
-     */
-    private function setupDemoMode()
-    {
-        try {
-            // Re-establish DB connection with new config
-            $this->refreshDbConnection();
-
-            // Generate password hash for demo users
-            $passwordHash = Hash::make('password');
-
-            // Import demo data SQL
-            $sqlFile = base_path('database/sql/demo_data.sql');
-            if (File::exists($sqlFile)) {
-                $sql = File::get($sqlFile);
-                // Replace placeholder hash with real bcrypt hash
-                $sql = str_replace('$2y$12$YourHashWillBeReplacedByInstaller', $passwordHash, $sql);
-                DB::unprepared($sql);
-            }
-
-            // Set app mode
-            $this->setEnvValue('APP_MODE', 'demo');
-            $this->setEnvValue('APP_NAME', '"XapiVerse Demo"');
-
-            session(['install_mode' => 'demo']);
-
-        } catch (\Exception $e) {
-            return redirect()->route('install.mode')
-                ->withErrors(['error' => 'Demo setup failed: ' . $e->getMessage()]);
-        }
-
-        return redirect()->route('install.complete');
-    }
-
-    /**
-     * Step 5: Create accounts (Business mode only)
-     */
-    public function accounts()
+    public function account()
     {
         if (session('install_mode') !== 'business') {
             return redirect()->route('install.mode');
         }
-
-        return view('install.accounts');
+        return view('install.account');
     }
 
     /**
-     * Step 5: Save accounts (Business mode)
+     * Step 5: Save super admin and finish
      */
-    public function saveAccounts(Request $request)
+    public function saveAccount(Request $request)
     {
         $request->validate([
             'site_name' => 'required|string|max:255',
-            'site_url' => 'required|url',
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|max:255',
             'admin_password' => 'required|string|min:8',
-            'developer_name' => 'nullable|string|max:255',
-            'developer_email' => 'nullable|email|max:255',
-            'developer_password' => 'nullable|string|min:8',
-            'user_name' => 'nullable|string|max:255',
-            'user_email' => 'nullable|email|max:255',
-            'user_password' => 'nullable|string|min:8',
         ]);
 
+        // Connect to DB using saved .env values
         try {
-            // Re-establish DB connection
-            $this->refreshDbConnection();
+            $pdo = $this->getDbConnection();
 
-            // Update .env
-            $this->setEnvValue('APP_MODE', 'business');
-            $this->setEnvValue('APP_NAME', '"' . $request->input('site_name') . '"');
-            $this->setEnvValue('APP_URL', $request->input('site_url'));
-
-            // Create Super Admin
-            User::create([
-                'name' => $request->input('admin_name'),
-                'email' => $request->input('admin_email'),
-                'password' => Hash::make($request->input('admin_password')),
-                'role' => 'admin',
-                'email_verified_at' => now(),
-                'is_active' => true,
+            // Insert super admin
+            $hash = password_hash($request->input('admin_password'), PASSWORD_BCRYPT, ['cost' => 12]);
+            $stmt = $pdo->prepare("INSERT INTO `users` (`name`, `email`, `email_verified_at`, `password`, `role`, `is_active`, `created_at`, `updated_at`) VALUES (?, ?, NOW(), ?, 'admin', 1, NOW(), NOW())");
+            $stmt->execute([
+                $request->input('admin_name'),
+                $request->input('admin_email'),
+                $hash,
             ]);
 
-            // Create Developer (optional)
-            if ($request->filled('developer_email')) {
-                User::create([
-                    'name' => $request->input('developer_name'),
-                    'email' => $request->input('developer_email'),
-                    'password' => Hash::make($request->input('developer_password')),
-                    'role' => 'developer',
-                    'email_verified_at' => now(),
-                    'is_active' => true,
-                ]);
-            }
+            // Update site name setting
+            $pdo->prepare("UPDATE `settings` SET `value` = ? WHERE `key` = 'site_name'")->execute([$request->input('site_name')]);
 
-            // Create User (optional)
-            if ($request->filled('user_email')) {
-                User::create([
-                    'name' => $request->input('user_name'),
-                    'email' => $request->input('user_email'),
-                    'password' => Hash::make($request->input('user_password')),
-                    'role' => 'user',
-                    'email_verified_at' => now(),
-                    'is_active' => true,
-                ]);
-            }
-
-            // Store business mode setting
-            Setting::set('install_mode', 'business', 'general', 'string');
-
-            // Store accounts info for complete page
-            session(['install_accounts' => [
-                'admin' => ['email' => $request->input('admin_email')],
-                'developer' => $request->filled('developer_email') ? ['email' => $request->input('developer_email')] : null,
-                'user' => $request->filled('user_email') ? ['email' => $request->input('user_email')] : null,
-            ]]);
-
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Setup failed: ' . $e->getMessage()]);
+        } catch (\PDOException $e) {
+            return back()->withErrors(['error' => 'Account creation failed: ' . $e->getMessage()]);
         }
 
-        return redirect()->route('install.complete');
+        // Update .env
+        $this->setEnvValue('APP_NAME', '"' . $request->input('site_name') . '"');
+
+        // Mark installed and redirect to admin login
+        $this->markInstalled('business');
+
+        return redirect('/admin/login');
     }
 
     /**
-     * Step 6: Installation complete
+     * Mark the application as installed
      */
-    public function complete()
+    private function markInstalled(string $mode): void
     {
-        $mode = session('install_mode', 'business');
-        $accounts = session('install_accounts', []);
-
-        $demoCredentials = [];
-        if ($mode === 'demo') {
-            $demoCredentials = [
-                'admin' => ['email' => 'admin@xapiverse.com', 'password' => 'password'],
-                'developer' => ['email' => 'dev@xapiverse.com', 'password' => 'password'],
-                'user' => ['email' => 'user@xapiverse.com', 'password' => 'password'],
-            ];
-        }
-
-        // Mark as installed
         File::put(storage_path('installed/installed.lock'), json_encode([
-            'installed_at' => now()->toDateTimeString(),
+            'installed_at' => date('Y-m-d H:i:s'),
             'version' => '1.0.0',
             'php_version' => PHP_VERSION,
             'mode' => $mode,
         ]));
-
-        // Clear caches
-        try {
-            Artisan::call('config:clear');
-            Artisan::call('cache:clear');
-            Artisan::call('view:clear');
-        } catch (\Exception $e) {
-            // Ignore cache clear errors
-        }
-
-        return view('install.complete', compact('mode', 'accounts', 'demoCredentials'));
     }
 
     /**
-     * Refresh database connection with current .env values
+     * Get PDO connection from .env values
      */
-    private function refreshDbConnection(): void
+    private function getDbConnection(): \PDO
     {
-        $envPath = base_path('.env');
+        $env = $this->readEnv();
+        return new \PDO(
+            "mysql:host={$env['DB_HOST']};port={$env['DB_PORT']};dbname={$env['DB_DATABASE']}",
+            $env['DB_USERNAME'],
+            $env['DB_PASSWORD'] ?? '',
+            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_EMULATE_PREPARES => true]
+        );
+    }
+
+    /**
+     * Read .env file into array
+     */
+    private function readEnv(): array
+    {
         $env = [];
-        foreach (explode("\n", File::get($envPath)) as $line) {
-            if (str_contains($line, '=') && !str_starts_with(trim($line), '#')) {
+        foreach (explode("\n", File::get(base_path('.env'))) as $line) {
+            $line = trim($line);
+            if ($line && !str_starts_with($line, '#') && str_contains($line, '=')) {
                 [$key, $value] = explode('=', $line, 2);
                 $env[trim($key)] = trim($value, " \t\n\r\0\x0B\"'");
             }
         }
-
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.host' => $env['DB_HOST'] ?? '127.0.0.1',
-            'database.connections.mysql.port' => $env['DB_PORT'] ?? '3306',
-            'database.connections.mysql.database' => $env['DB_DATABASE'] ?? 'xapiverse_db',
-            'database.connections.mysql.username' => $env['DB_USERNAME'] ?? 'root',
-            'database.connections.mysql.password' => $env['DB_PASSWORD'] ?? '',
-        ]);
-
-        DB::purge('mysql');
-        DB::reconnect('mysql');
+        return $env;
     }
 
     private function checkPermission(string $path): bool
