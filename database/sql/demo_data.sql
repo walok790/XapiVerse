@@ -1,6 +1,14 @@
 -- XapiVerse Demo Data
 -- Imported only in Demo mode during installation
 
+-- Clear any existing data first
+SET FOREIGN_KEY_CHECKS=0;
+TRUNCATE TABLE `users`;
+TRUNCATE TABLE `user_api_keys`;
+TRUNCATE TABLE `api_services`;
+TRUNCATE TABLE `api_source_keys`;
+SET FOREIGN_KEY_CHECKS=1;
+
 -- Demo Users (password = "password" bcrypt hash)
 INSERT INTO `users` (`name`, `email`, `email_verified_at`, `password`, `role`, `is_active`, `company`, `website`, `created_at`, `updated_at`) VALUES
 ('Admin User', 'admin@xapiverse.com', NOW(), '$2y$12$YourHashWillBeReplacedByInstaller', 'admin', 1, NULL, NULL, NOW(), NOW()),

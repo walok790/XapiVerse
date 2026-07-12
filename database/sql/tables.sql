@@ -6,9 +6,30 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
+-- Drop existing tables (clean install)
+-- --------------------------------------------------------
+DROP TABLE IF EXISTS `api_request_logs`;
+DROP TABLE IF EXISTS `api_key_import_batches`;
+DROP TABLE IF EXISTS `transactions`;
+DROP TABLE IF EXISTS `user_api_keys`;
+DROP TABLE IF EXISTS `api_source_keys`;
+DROP TABLE IF EXISTS `credit_packages`;
+DROP TABLE IF EXISTS `api_services`;
+DROP TABLE IF EXISTS `settings`;
+DROP TABLE IF EXISTS `sessions`;
+DROP TABLE IF EXISTS `cache`;
+DROP TABLE IF EXISTS `cache_locks`;
+DROP TABLE IF EXISTS `jobs`;
+DROP TABLE IF EXISTS `job_batches`;
+DROP TABLE IF EXISTS `failed_jobs`;
+DROP TABLE IF EXISTS `password_reset_tokens`;
+DROP TABLE IF EXISTS `migrations`;
+DROP TABLE IF EXISTS `users`;
+
+-- --------------------------------------------------------
 -- Table: users
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
@@ -35,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- --------------------------------------------------------
 -- Table: password_reset_tokens
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+CREATE TABLE `password_reset_tokens` (
   `email` varchar(255) NOT NULL,
   `token` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -45,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
 -- --------------------------------------------------------
 -- Table: sessions
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sessions` (
+CREATE TABLE `sessions` (
   `id` varchar(255) NOT NULL,
   `user_id` bigint(20) UNSIGNED DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
@@ -60,14 +81,14 @@ CREATE TABLE IF NOT EXISTS `sessions` (
 -- --------------------------------------------------------
 -- Table: cache
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `cache` (
+CREATE TABLE `cache` (
   `key` varchar(255) NOT NULL,
   `value` mediumtext NOT NULL,
   `expiration` int(11) NOT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `cache_locks` (
+CREATE TABLE `cache_locks` (
   `key` varchar(255) NOT NULL,
   `owner` varchar(255) NOT NULL,
   `expiration` int(11) NOT NULL,
@@ -77,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `cache_locks` (
 -- --------------------------------------------------------
 -- Table: jobs
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `jobs` (
+CREATE TABLE `jobs` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `queue` varchar(255) NOT NULL,
   `payload` longtext NOT NULL,
@@ -89,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `jobs` (
   KEY `jobs_queue_index` (`queue`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `job_batches` (
+CREATE TABLE `job_batches` (
   `id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `total_jobs` int(11) NOT NULL,
@@ -103,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `job_batches` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `failed_jobs` (
+CREATE TABLE `failed_jobs` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `uuid` varchar(255) NOT NULL,
   `connection` text NOT NULL,
@@ -118,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
 -- --------------------------------------------------------
 -- Table: api_services
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `api_services` (
+CREATE TABLE `api_services` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `slug` varchar(255) NOT NULL,
@@ -145,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `api_services` (
 -- --------------------------------------------------------
 -- Table: api_source_keys
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `api_source_keys` (
+CREATE TABLE `api_source_keys` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `api_service_id` bigint(20) UNSIGNED NOT NULL,
   `key_type` enum('master','free','custom') NOT NULL DEFAULT 'free',
@@ -184,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `api_source_keys` (
 -- --------------------------------------------------------
 -- Table: user_api_keys
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `user_api_keys` (
+CREATE TABLE `user_api_keys` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -210,7 +231,7 @@ CREATE TABLE IF NOT EXISTS `user_api_keys` (
 -- --------------------------------------------------------
 -- Table: credit_packages
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `credit_packages` (
+CREATE TABLE `credit_packages` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `price` decimal(10,2) NOT NULL,
@@ -227,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `credit_packages` (
 -- --------------------------------------------------------
 -- Table: transactions
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `transactions` (
+CREATE TABLE `transactions` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `transaction_id` varchar(255) NOT NULL,
@@ -251,7 +272,7 @@ CREATE TABLE IF NOT EXISTS `transactions` (
 -- --------------------------------------------------------
 -- Table: api_request_logs
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `api_request_logs` (
+CREATE TABLE `api_request_logs` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED DEFAULT NULL,
   `user_api_key_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -277,7 +298,7 @@ CREATE TABLE IF NOT EXISTS `api_request_logs` (
 -- --------------------------------------------------------
 -- Table: api_key_import_batches
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `api_key_import_batches` (
+CREATE TABLE `api_key_import_batches` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `batch_id` varchar(255) NOT NULL,
   `api_service_id` bigint(20) UNSIGNED NOT NULL,
@@ -303,7 +324,7 @@ CREATE TABLE IF NOT EXISTS `api_key_import_batches` (
 -- --------------------------------------------------------
 -- Table: settings
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `settings` (
+CREATE TABLE `settings` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `group` varchar(255) NOT NULL DEFAULT 'general',
   `key` varchar(255) NOT NULL,
@@ -321,7 +342,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 -- --------------------------------------------------------
 -- Table: migrations (Laravel tracking)
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `migrations` (
+CREATE TABLE `migrations` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `migration` varchar(255) NOT NULL,
   `batch` int(11) NOT NULL,
@@ -329,7 +350,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mark migrations as run
-INSERT INTO `migrations` (`migration`, `batch`) VALUES
+INSERT IGNORE INTO `migrations` (`migration`, `batch`) VALUES
 ('0001_01_01_000000_create_users_table', 1),
 ('0001_01_01_000001_create_cache_table', 1),
 ('0001_01_01_000002_create_jobs_table', 1),
@@ -344,7 +365,7 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES
 -- --------------------------------------------------------
 -- Default Settings (always imported)
 -- --------------------------------------------------------
-INSERT INTO `settings` (`group`, `key`, `value`, `type`, `description`, `is_public`, `created_at`, `updated_at`) VALUES
+INSERT IGNORE INTO `settings` (`group`, `key`, `value`, `type`, `description`, `is_public`, `created_at`, `updated_at`) VALUES
 ('general', 'site_name', 'XapiVerse', 'string', 'Platform name', 0, NOW(), NOW()),
 ('general', 'site_description', 'Fast & Affordable APIs for Developers', 'string', 'Platform description', 1, NOW(), NOW()),
 ('general', 'site_version', '1.0.0', 'string', 'Platform version', 0, NOW(), NOW()),
@@ -361,7 +382,7 @@ INSERT INTO `settings` (`group`, `key`, `value`, `type`, `description`, `is_publ
 ('payment', 'min_purchase_amount', '1.00', 'string', 'Minimum purchase amount', 0, NOW(), NOW());
 
 -- Default Credit Packages
-INSERT INTO `credit_packages` (`name`, `price`, `credits`, `description`, `is_popular`, `is_active`, `sort_order`, `created_at`, `updated_at`) VALUES
+INSERT IGNORE INTO `credit_packages` (`name`, `price`, `credits`, `description`, `is_popular`, `is_active`, `sort_order`, `created_at`, `updated_at`) VALUES
 ('Starter', 1.00, 25000, 'Perfect for testing', 0, 1, 1, NOW(), NOW()),
 ('Developer', 5.00, 150000, 'For small projects', 1, 1, 2, NOW(), NOW()),
 ('Business', 20.00, 750000, 'For production apps', 0, 1, 3, NOW(), NOW()),

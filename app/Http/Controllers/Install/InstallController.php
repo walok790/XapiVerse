@@ -125,6 +125,10 @@ class InstallController extends Controller
                 }
 
                 $sql = File::get($sqlFile);
+
+                // Execute multi-statement SQL properly
+                // PDO::exec can handle multiple statements when using MySQL
+                $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
                 $pdo->exec($sql);
             } catch (\PDOException $e) {
                 return back()->withErrors(['db_error' => 'SQL import failed: ' . $e->getMessage()]);
