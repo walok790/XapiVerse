@@ -100,11 +100,14 @@ async function startInstall() {
     var step = 0;
     var total = 18;
 
+    // Get base URL dynamically (works with artisan serve AND XAMPP subfolder)
+    var baseUrl = document.querySelector('meta[name="base-url"]')?.content || '';
+
     while (true) {
         updateProgress(step, total, 'Installing...');
 
         try {
-            var response = await fetch('/api/install/run-step', {
+            var response = await fetch(baseUrl + '/api/install/run-step', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,10 +123,19 @@ async function startInstall() {
                 })
             });
 
-            var data = await response.json();
+            var text = await response.text();
+            var data;
+            try {
+                data = JSON.parse(text);
+            } catch(e) {
+                showError('Server error (not JSON). Check PHP error logs. Response: ' + text.substring(0, 200));
+                document.getElementById('formSection').style.display = 'block';
+                document.getElementById('progressSection').classList.add('hidden');
+                return;
+            }
 
             if (!data.success) {
-                showError(data.error || 'Unknown error');
+                showError(data.error || 'Server returned an error. Check your database credentials.');
                 document.getElementById('formSection').style.display = 'block';
                 document.getElementById('progressSection').classList.add('hidden');
                 return;
@@ -143,7 +155,7 @@ async function startInstall() {
 
             step = data.next;
         } catch (err) {
-            showError('Network error: ' + err.message + '. Please try again.');
+            showError('Request failed: ' + err.message + '. Make sure MySQL is running in XAMPP.');
             document.getElementById('formSection').style.display = 'block';
             document.getElementById('progressSection').classList.add('hidden');
             return;
