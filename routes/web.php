@@ -60,7 +60,7 @@ Route::get('/', function () {
             default => redirect()->route('user.dashboard'),
         };
     }
-    return redirect()->route('login');
+    return view('landing');
 })->name('home');
 
 /*
@@ -122,9 +122,14 @@ Route::middleware(['auth', 'role:developer'])->prefix('developer')->name('develo
 
 /*
 |--------------------------------------------------------------------------
-| User Routes
+| User Routes (Iteraplay)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/', function () { return view('user.dashboard'); })->name('dashboard');
+    Route::get('/', [App\Http\Controllers\User\UserController::class, 'dashboard'])->name('dashboard');
+    Route::get('/player', [App\Http\Controllers\User\UserController::class, 'player'])->name('player');
+    Route::post('/player/process', [App\Http\Controllers\User\UserController::class, 'processLink'])->name('player.process');
+    Route::get('/profile', [App\Http\Controllers\User\UserController::class, 'profile'])->name('profile');
+    Route::put('/profile', [App\Http\Controllers\User\UserController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/password', [App\Http\Controllers\User\UserController::class, 'updatePassword'])->name('profile.password');
 });
