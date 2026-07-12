@@ -104,11 +104,11 @@ async function startInstall() {
         updateProgress(step, total, 'Installing...');
 
         try {
-            var response = await fetch('{{ route("install.run-step") }}', {
+            var response = await fetch('/api/install/run-step', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     step: step,

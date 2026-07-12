@@ -1,6 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Install\InstallController;
+
+/*
+|--------------------------------------------------------------------------
+| Installation AJAX endpoint (no session, no CSRF - cannot crash)
+|--------------------------------------------------------------------------
+*/
+Route::post('/install/run-step', [InstallController::class, 'runStep'])->name('install.run-step');
 
 /*
 |--------------------------------------------------------------------------
