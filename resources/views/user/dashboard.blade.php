@@ -1,118 +1,175 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="p-6 lg:p-8 space-y-8">
-    <!-- Welcome Card -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-brand-600 to-purple-700 p-8 shadow-xl shadow-brand-500/20">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-2xl translate-y-1/2 -translate-x-1/4"></div>
-        </div>
-        <div class="relative">
-            <div class="flex items-center space-x-2 mb-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
-                    Platform User
-                </span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-jakarta font-bold text-white mb-2">
-                Welcome back, {{ $user->name }}!
-            </h1>
-            <p class="text-white/70 text-sm sm:text-base">Access your tools and services from your personal dashboard.</p>
-        </div>
-    </div>
-
-
-    <!-- Available Tools -->
+<!-- Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
     <div>
-        <h2 class="text-xl font-jakarta font-bold text-gray-900 mb-4">Available Tools</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($services as $service)
-            <a href="{{ url('/user/player') }}" class="group block p-6 rounded-2xl border border-gray-100 bg-white hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+        <h1 class="font-jakarta text-2xl sm:text-3xl font-bold text-white">Welcome back, {{ $user->name }}!</h1>
+        <p class="text-gray-400 mt-1">Here's your activity overview.</p>
+    </div>
+    <div class="flex items-center space-x-3 mt-4 sm:mt-0">
+        <span class="px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full">Free Plan</span>
+        <a href="{{ route('user.player') }}" class="px-4 py-2 border border-white/10 text-white text-sm rounded-lg hover:bg-white/5 transition-colors">Search Videos</a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+    <div class="bg-[#141419] border border-white/5 rounded-xl p-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-white">0</p>
+                <p class="text-xs text-gray-500">Videos Watched</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-[#141419] border border-white/5 rounded-xl p-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-white">0</p>
+                <p class="text-xs text-gray-500">Downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-[#141419] border border-white/5 rounded-xl p-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-white">0</p>
+                <p class="text-xs text-gray-500">Bookmarks</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-[#141419] border border-white/5 rounded-xl p-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-white">0</p>
+                <p class="text-xs text-gray-500">History</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-[#141419] border border-white/5 rounded-xl p-4">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-white">5</p>
+                <p class="text-xs text-gray-500">Credits Today</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Main Grid -->
+<div class="grid lg:grid-cols-3 gap-6">
+    <!-- Left Column (2/3) -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Today's Usage -->
+        <div class="bg-[#141419] border border-white/5 rounded-xl p-6">
+            <h3 class="font-jakarta font-semibold text-white mb-4">Today's Usage</h3>
+            <div class="mb-3">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-400">0 / 5 searches used</span>
+                    <span class="text-sm text-gray-500">0%</span>
                 </div>
-                <h3 class="text-lg font-jakarta font-semibold text-gray-900 mb-1 group-hover:text-brand-600 transition-colors">{{ $service->name }}</h3>
-                <p class="text-sm text-gray-500">{{ $service->description ?? 'Access this service tool' }}</p>
-                <div class="mt-4 flex items-center text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Open Tool
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                <div class="w-full h-2 bg-dark-950 rounded-full overflow-hidden">
+                    <div class="h-full bg-brand-600 rounded-full" style="width: 0%"></div>
                 </div>
-            </a>
-            @empty
-            <a href="{{ url('/user/player') }}" class="group block p-6 rounded-2xl border border-gray-100 bg-white hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+            </div>
+            <div class="flex items-center space-x-4 mt-4">
+                <a href="{{ route('user.player') }}" class="text-sm text-teal-400 hover:text-teal-300 font-medium transition-colors">Search Now →</a>
+                <a href="{{ route('user.subscription') }}" class="text-sm text-yellow-400 hover:text-yellow-300 font-medium transition-colors">Upgrade for More</a>
+            </div>
+        </div>
+
+        <!-- Recent History -->
+        <div class="bg-[#141419] border border-white/5 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-jakarta font-semibold text-white">Recent History</h3>
+                <a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">View All →</a>
+            </div>
+            <div class="text-center py-8">
+                <div class="w-12 h-12 bg-dark-950 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <h3 class="text-lg font-jakarta font-semibold text-gray-900 mb-1 group-hover:text-brand-600 transition-colors">TeraBox Player</h3>
-                <p class="text-sm text-gray-500">Stream and download TeraBox videos directly</p>
-                <div class="mt-4 flex items-center text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Open Tool
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </div>
-            </a>
-            @endforelse
+                <p class="text-gray-500 text-sm">No history yet. Start watching!</p>
+                <a href="{{ route('user.player') }}" class="inline-block mt-3 text-sm text-brand-400 hover:text-brand-300 font-medium transition-colors">Go to Player →</a>
+            </div>
         </div>
     </div>
 
-
-    <!-- Quick Actions & Stats -->
-    <div class="grid sm:grid-cols-2 gap-6">
-        <!-- Quick Actions -->
-        <div class="p-6 rounded-2xl border border-gray-100 bg-white">
-            <h3 class="text-lg font-jakarta font-semibold text-gray-900 mb-4">Quick Actions</h3>
+    <!-- Right Column (1/3) -->
+    <div class="space-y-6">
+        <!-- Your Plan -->
+        <div class="bg-[#141419] border border-white/5 rounded-xl p-6">
+            <h3 class="font-jakarta font-semibold text-white mb-4">Your Plan</h3>
             <div class="space-y-3">
-                <a href="{{ url('/user/player') }}" class="flex items-center p-3 rounded-xl hover:bg-brand-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center mr-3 group-hover:bg-brand-200 transition-colors">
-                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">TeraBox Player</p>
-                        <p class="text-xs text-gray-500">Stream or download videos</p>
-                    </div>
-                </a>
-                <a href="{{ url('/user/profile') }}" class="flex items-center p-3 rounded-xl hover:bg-brand-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Profile Settings</p>
-                        <p class="text-xs text-gray-500">Update your account details</p>
-                    </div>
-                </a>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Plan</span>
+                    <span class="text-sm font-semibold text-white">Free</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Daily Searches</span>
+                    <span class="text-sm font-semibold text-white">5</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">API Access</span>
+                    <span class="text-sm font-semibold text-red-400">No</span>
+                </div>
             </div>
+            <a href="{{ route('user.subscription') }}" class="block w-full mt-5 py-2.5 text-center text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors">Upgrade Plan</a>
         </div>
 
-        <!-- Account Info -->
-        <div class="p-6 rounded-2xl border border-gray-100 bg-white">
-            <h3 class="text-lg font-jakarta font-semibold text-gray-900 mb-4">Account Info</h3>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-                    <span class="text-sm text-gray-500">Member since</span>
-                    <span class="text-sm font-medium text-gray-900">{{ $user->created_at->format('M d, Y') }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-                    <span class="text-sm text-gray-500">Account type</span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700 capitalize">{{ $user->role }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-                    <span class="text-sm text-gray-500">Email</span>
-                    <span class="text-sm font-medium text-gray-900">{{ $user->email }}</span>
-                </div>
-            </div>
+        <!-- Quick Links -->
+        <div class="bg-[#141419] border border-white/5 rounded-xl p-6">
+            <h3 class="font-jakarta font-semibold text-white mb-4">Quick Links</h3>
+            <ul class="space-y-2">
+                <li>
+                    <a href="#" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group">
+                        <span class="text-sm text-gray-400 group-hover:text-white">My Bookmarks</span>
+                        <span class="text-xs text-gray-600 bg-dark-950 px-2 py-0.5 rounded">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group">
+                        <span class="text-sm text-gray-400 group-hover:text-white">Watch History</span>
+                        <span class="text-xs text-gray-600 bg-dark-950 px-2 py-0.5 rounded">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group">
+                        <span class="text-sm text-gray-400 group-hover:text-white">Transactions</span>
+                        <svg class="w-4 h-4 text-gray-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group">
+                        <span class="text-sm text-gray-400 group-hover:text-white">Support</span>
+                        <svg class="w-4 h-4 text-gray-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('user.profile') }}" class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/5 transition-colors group">
+                        <span class="text-sm text-gray-400 group-hover:text-white">Edit Profile</span>
+                        <svg class="w-4 h-4 text-gray-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
 </div>

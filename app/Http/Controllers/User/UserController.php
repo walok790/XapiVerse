@@ -42,6 +42,11 @@ class UserController extends Controller
         ]);
     }
 
+    public function subscription()
+    {
+        return view('user.subscription');
+    }
+
     public function profile()
     {
         return view('user.profile', ['user' => auth()->user()]);
