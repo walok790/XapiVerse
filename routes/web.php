@@ -57,7 +57,7 @@ Route::get('/', function () {
         return match(auth()->user()->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'developer' => redirect()->route('developer.dashboard'),
-            default => redirect()->route('user.dashboard'),
+            default => redirect()->route('user.home'),
         };
     }
     return view('landing');
@@ -122,14 +122,40 @@ Route::middleware(['auth', 'role:developer'])->prefix('developer')->name('develo
 
 /*
 |--------------------------------------------------------------------------
-| User Routes (Iteraplay)
+| User Routes (Iteraplay - New Dashboard)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/', [App\Http\Controllers\User\UserController::class, 'dashboard'])->name('dashboard');
-    Route::get('/player', [App\Http\Controllers\User\UserController::class, 'player'])->name('player');
-    Route::post('/player/process', [App\Http\Controllers\User\UserController::class, 'processLink'])->name('player.process');
+    // Home (Search + Recent Watches)
+    Route::get('/', [App\Http\Controllers\User\UserController::class, 'home'])->name('home');
+    Route::post('/process', [App\Http\Controllers\User\UserController::class, 'processLink'])->name('process');
+
+    // History
+    Route::get('/history', [App\Http\Controllers\User\UserController::class, 'history'])->name('history');
+    Route::delete('/history/{id}', [App\Http\Controllers\User\UserController::class, 'deleteHistory'])->name('history.delete');
+    Route::delete('/history', [App\Http\Controllers\User\UserController::class, 'clearHistory'])->name('history.clear');
+
+    // Bookmarks
+    Route::get('/bookmarks', [App\Http\Controllers\User\UserController::class, 'bookmarks'])->name('bookmarks');
+    Route::post('/bookmarks', [App\Http\Controllers\User\UserController::class, 'addBookmark'])->name('bookmarks.add');
+    Route::delete('/bookmarks/{id}', [App\Http\Controllers\User\UserController::class, 'removeBookmark'])->name('bookmarks.remove');
+    Route::delete('/bookmarks', [App\Http\Controllers\User\UserController::class, 'clearBookmarks'])->name('bookmarks.clear');
+
+    // Subscription
     Route::get('/subscription', [App\Http\Controllers\User\UserController::class, 'subscription'])->name('subscription');
+
+    // Transactions
+    Route::get('/transactions', [App\Http\Controllers\User\UserController::class, 'transactions'])->name('transactions');
+
+    // Support
+    Route::get('/support', [App\Http\Controllers\User\UserController::class, 'support'])->name('support');
+    Route::post('/support', [App\Http\Controllers\User\UserController::class, 'createTicket'])->name('support.create');
+
+    // Notifications
+    Route::get('/notifications', [App\Http\Controllers\User\UserController::class, 'notifications'])->name('notifications');
+    Route::get('/notifications/count', [App\Http\Controllers\User\UserController::class, 'unreadCount'])->name('notifications.count');
+
+    // Profile
     Route::get('/profile', [App\Http\Controllers\User\UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [App\Http\Controllers\User\UserController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [App\Http\Controllers\User\UserController::class, 'updatePassword'])->name('profile.password');
