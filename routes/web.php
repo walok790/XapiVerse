@@ -8,10 +8,10 @@ use App\Http\Controllers\Admin;
 
 /*
 |--------------------------------------------------------------------------
-| Installation Routes (only accessible when not installed)
+| Installation Routes (protected globally by CheckInstalled middleware)
 |--------------------------------------------------------------------------
 */
-Route::middleware('install.check')->prefix('install')->group(function () {
+Route::prefix('install')->group(function () {
     Route::get('/', [InstallController::class, 'requirements'])->name('install.requirements');
     Route::get('/permissions', [InstallController::class, 'permissions'])->name('install.permissions');
     Route::get('/database', [InstallController::class, 'database'])->name('install.database');

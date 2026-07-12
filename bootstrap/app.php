@@ -13,11 +13,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Add CheckInstalled to the web middleware group (runs on EVERY web request)
+        // This ensures any URL redirects to /install if app is not installed
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckInstalled::class,
+        ]);
+
         // Register route middleware aliases
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
-            'install.check' => \App\Http\Middleware\CheckInstalled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
