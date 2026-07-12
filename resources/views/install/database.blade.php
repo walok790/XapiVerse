@@ -1,7 +1,7 @@
 @extends('layouts.install')
 
 @section('content')
-<div class="p-6 lg:p-8">
+<div class="p-6 lg:p-8" x-data="{ loading: false }">
     <h2 class="font-jakarta text-xl font-bold text-gray-900 mb-1">Database Setup</h2>
     <p class="text-gray-500 text-sm mb-2">Enter your MySQL database credentials.</p>
 
@@ -23,39 +23,60 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('install.save-database') }}" class="space-y-5">
+    <!-- Loading Overlay -->
+    <div x-show="loading" x-cloak class="fixed inset-0 z-50 bg-gray-900/60 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
+            <!-- Spinner -->
+            <div class="mx-auto w-16 h-16 mb-4 relative">
+                <div class="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-brand-600 border-t-transparent animate-spin"></div>
+            </div>
+            <h3 class="font-jakarta font-bold text-lg text-gray-900 mb-2">Installing Database...</h3>
+            <p class="text-sm text-gray-500 mb-1">Creating tables and importing data.</p>
+            <p class="text-xs text-gray-400">Please wait, do not close this page.</p>
+
+            <!-- Progress dots animation -->
+            <div class="flex justify-center space-x-1.5 mt-4">
+                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('install.save-database') }}" class="space-y-5" @submit="loading = true">
         @csrf
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="db_host" class="block text-sm font-medium text-gray-700 mb-1">Database Host</label>
-                <input type="text" id="db_host" name="db_host" value="{{ old('db_host', '127.0.0.1') }}" required
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                <input type="text" id="db_host" name="db_host" value="{{ old('db_host', '127.0.0.1') }}" required :disabled="loading"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
             </div>
             <div>
                 <label for="db_port" class="block text-sm font-medium text-gray-700 mb-1">Port</label>
-                <input type="number" id="db_port" name="db_port" value="{{ old('db_port', '3306') }}" required
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                <input type="number" id="db_port" name="db_port" value="{{ old('db_port', '3306') }}" required :disabled="loading"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
             </div>
         </div>
 
         <div>
             <label for="db_name" class="block text-sm font-medium text-gray-700 mb-1">Database Name</label>
-            <input type="text" id="db_name" name="db_name" value="{{ old('db_name', 'xapiverse_db') }}" required
-                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+            <input type="text" id="db_name" name="db_name" value="{{ old('db_name', 'xapiverse_db') }}" required :disabled="loading"
+                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
             <p class="mt-1 text-xs text-gray-500">Will be created automatically if it doesn't exist.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="db_user" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" id="db_user" name="db_user" value="{{ old('db_user', 'root') }}" required
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                <input type="text" id="db_user" name="db_user" value="{{ old('db_user', 'root') }}" required :disabled="loading"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
             </div>
             <div>
                 <label for="db_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" id="db_password" name="db_password" value="{{ old('db_password') }}"
-                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+                <input type="password" id="db_password" name="db_password" value="{{ old('db_password') }}" :disabled="loading"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
                        placeholder="Empty if none">
             </div>
         </div>
@@ -65,17 +86,27 @@
         </div>
 
         <div class="flex justify-between pt-2">
-            <a href="{{ route('install.mode') }}" class="inline-flex items-center px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900">
+            <a href="{{ route('install.mode') }}" x-show="!loading" class="inline-flex items-center px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Back
             </a>
-            <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
-                @if($mode === 'demo')
-                    Install & Finish
-                @else
-                    Import & Next
-                @endif
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <button type="submit" :disabled="loading" class="inline-flex items-center px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <template x-if="!loading">
+                    <span class="inline-flex items-center">
+                        @if($mode === 'demo')
+                            Install & Finish
+                        @else
+                            Import & Next
+                        @endif
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </span>
+                </template>
+                <template x-if="loading">
+                    <span class="inline-flex items-center">
+                        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Installing...
+                    </span>
+                </template>
             </button>
         </div>
     </form>
