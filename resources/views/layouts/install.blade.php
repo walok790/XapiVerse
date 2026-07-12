@@ -22,18 +22,7 @@
                         'inter': ['Inter', 'sans-serif'],
                     },
                     colors: {
-                        brand: {
-                            50: '#f5f3ff',
-                            100: '#ede9fe',
-                            200: '#ddd6fe',
-                            300: '#c4b5fd',
-                            400: '#a78bfa',
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                            700: '#6d28d9',
-                            800: '#5b21b6',
-                            900: '#4c1d95',
-                        }
+                        brand: { 50:'#f5f3ff',100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6',600:'#7c3aed',700:'#6d28d9',800:'#5b21b6',900:'#4c1d95' }
                     }
                 }
             }
@@ -46,6 +35,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
@@ -61,7 +51,7 @@
             <p class="text-gray-500 mt-2">Installation Wizard</p>
         </div>
 
-        <!-- Steps Indicator (5 steps - no License) -->
+        <!-- Steps Indicator (6 steps) -->
         <div class="mb-8">
             <div class="flex items-center justify-between">
                 @php
@@ -69,7 +59,8 @@
                         ['name' => 'Requirements', 'route' => 'install.requirements'],
                         ['name' => 'Permissions', 'route' => 'install.permissions'],
                         ['name' => 'Database', 'route' => 'install.database'],
-                        ['name' => 'Setup', 'route' => 'install.admin'],
+                        ['name' => 'Mode', 'route' => 'install.mode'],
+                        ['name' => 'Accounts', 'route' => 'install.accounts'],
                         ['name' => 'Completed', 'route' => 'install.complete'],
                     ];
                     $currentStep = collect($steps)->search(fn($s) => request()->routeIs($s['route']));
@@ -87,10 +78,10 @@
                                     {{ $index + 1 }}
                                 @endif
                             </div>
-                            <span class="text-xs mt-1 {{ $index === $currentStep ? 'text-brand-600 font-medium' : 'text-gray-500' }}">{{ $step['name'] }}</span>
+                            <span class="text-xs mt-1 whitespace-nowrap {{ $index === $currentStep ? 'text-brand-600 font-medium' : 'text-gray-500' }}">{{ $step['name'] }}</span>
                         </div>
                         @if($index < count($steps) - 1)
-                            <div class="flex-1 h-0.5 mx-2 mt-[-12px] {{ $index < $currentStep ? 'bg-green-500' : 'bg-gray-200' }}"></div>
+                            <div class="flex-1 h-0.5 mx-1 sm:mx-2 mt-[-12px] {{ $index < $currentStep ? 'bg-green-500' : 'bg-gray-200' }}"></div>
                         @endif
                     </div>
                 @endforeach

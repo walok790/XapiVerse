@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
 use App\Models\User;
+use App\Models\UserApiKey;
+use App\Models\Setting;
 
 class InstallController extends Controller
 {
@@ -112,65 +114,195 @@ class InstallController extends Controller
             return back()->withErrors(['db_error' => 'Migration failed: ' . $e->getMessage()]);
         }
 
-        return redirect()->route('install.admin');
+        return redirect()->route('install.mode');
     }
 
     /**
-     * Step 4: Create admin account & import default data
+     * Step 4: Choose installation mode (Business or Demo)
      */
-    public function admin()
+    public function mode()
     {
-        return view('install.admin');
+        return view('install.mode');
     }
 
     /**
-     * Step 4: Save admin account
+     * Step 4: Save mode selection
      */
-    public function saveAdmin(Request $request)
+    public function saveMode(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'password' => 'required|string|min:8|confirmed',
-            'site_name' => 'required|string|max:255',
-            'site_url' => 'required|url',
+            'install_mode' => 'required|in:business,demo',
         ]);
 
+        $mode = $request->input('install_mode');
+
+        // Store mode in session for next step
+        session(['install_mode' => $mode]);
+
+        if ($mode === 'demo') {
+            // Demo mode: seed everything automatically
+            return $this->setupDemoMode();
+        }
+
+        // Business mode: go to account creation
+        return redirect()->route('install.accounts');
+    }
+
+    /**
+     * Setup demo mode - seed all demo data and finish
+     */
+    private function setupDemoMode()
+    {
         try {
-            // Create admin user
-            User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'password' => Hash::make($request->input('password')),
-                'role' => 'admin',
-                'email_verified_at' => now(),
-                'is_active' => true,
-            ]);
+            // Set demo mode in env
+            $this->setEnvValue('APP_MODE', 'demo');
+            $this->setEnvValue('APP_NAME', '"XapiVerse Demo"');
 
-            // Update .env with site settings
-            $this->setEnvValue('APP_NAME', '"' . $request->input('site_name') . '"');
-            $this->setEnvValue('APP_URL', $request->input('site_url'));
-
-            // Seed default data
+            // Seed default settings + demo data
             Artisan::call('db:seed', ['--class' => 'DefaultSettingsSeeder', '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'DemoSeeder', '--force' => true]);
+
+            // Store demo mode setting
+            Setting::set('install_mode', 'demo', 'general', 'string');
 
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Setup failed: ' . $e->getMessage()]);
+            return redirect()->route('install.mode')
+                ->withErrors(['error' => 'Demo setup failed: ' . $e->getMessage()]);
         }
 
         return redirect()->route('install.complete');
     }
 
     /**
-     * Step 5: Installation complete
+     * Step 5: Create accounts (Business mode only)
+     */
+    public function accounts()
+    {
+        // Only accessible in business mode
+        if (session('install_mode') !== 'business') {
+            return redirect()->route('install.mode');
+        }
+
+        return view('install.accounts');
+    }
+
+    /**
+     * Step 5: Save accounts
+     */
+    public function saveAccounts(Request $request)
+    {
+        $request->validate([
+            'site_name' => 'required|string|max:255',
+            'site_url' => 'required|url',
+            // Admin
+            'admin_name' => 'required|string|max:255',
+            'admin_email' => 'required|email|max:255',
+            'admin_password' => 'required|string|min:8',
+            // Developer (optional)
+            'developer_name' => 'nullable|string|max:255',
+            'developer_email' => 'nullable|email|max:255',
+            'developer_password' => 'nullable|string|min:8',
+            // User (optional)
+            'user_name' => 'nullable|string|max:255',
+            'user_email' => 'nullable|email|max:255',
+            'user_password' => 'nullable|string|min:8',
+        ]);
+
+        try {
+            // Update .env
+            $this->setEnvValue('APP_MODE', 'business');
+            $this->setEnvValue('APP_NAME', '"' . $request->input('site_name') . '"');
+            $this->setEnvValue('APP_URL', $request->input('site_url'));
+
+            // Create Admin
+            User::create([
+                'name' => $request->input('admin_name'),
+                'email' => $request->input('admin_email'),
+                'password' => Hash::make($request->input('admin_password')),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+                'is_active' => true,
+            ]);
+
+            // Create Developer (if provided)
+            if ($request->filled('developer_email')) {
+                $dev = User::create([
+                    'name' => $request->input('developer_name'),
+                    'email' => $request->input('developer_email'),
+                    'password' => Hash::make($request->input('developer_password')),
+                    'role' => 'developer',
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                ]);
+
+                // Create default API key for developer
+                UserApiKey::create([
+                    'user_id' => $dev->id,
+                    'name' => 'Default Key',
+                    'api_key' => UserApiKey::generateKey('live'),
+                    'prefix' => 'xv_live_',
+                    'credits_balance' => 1000,
+                    'is_active' => true,
+                    'rate_limit_per_minute' => 60,
+                ]);
+            }
+
+            // Create User (if provided)
+            if ($request->filled('user_email')) {
+                User::create([
+                    'name' => $request->input('user_name'),
+                    'email' => $request->input('user_email'),
+                    'password' => Hash::make($request->input('user_password')),
+                    'role' => 'user',
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                ]);
+            }
+
+            // Seed default settings
+            Artisan::call('db:seed', ['--class' => 'DefaultSettingsSeeder', '--force' => true]);
+
+            // Store business mode
+            Setting::set('install_mode', 'business', 'general', 'string');
+
+            // Store created accounts info in session for complete page
+            session(['install_accounts' => [
+                'admin' => ['email' => $request->input('admin_email')],
+                'developer' => $request->filled('developer_email') ? ['email' => $request->input('developer_email')] : null,
+                'user' => $request->filled('user_email') ? ['email' => $request->input('user_email')] : null,
+            ]]);
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Account setup failed: ' . $e->getMessage()]);
+        }
+
+        return redirect()->route('install.complete');
+    }
+
+    /**
+     * Step 6: Installation complete
      */
     public function complete()
     {
+        $mode = session('install_mode', 'business');
+        $accounts = session('install_accounts', []);
+
+        // Demo credentials
+        $demoCredentials = [];
+        if ($mode === 'demo') {
+            $demoCredentials = [
+                'admin' => ['email' => 'admin@xapiverse.com', 'password' => 'password'],
+                'developer' => ['email' => 'dev@xapiverse.com', 'password' => 'password'],
+                'user' => ['email' => 'user@xapiverse.com', 'password' => 'password'],
+            ];
+        }
+
         // Mark as installed
         File::put(storage_path('installed/installed.lock'), json_encode([
             'installed_at' => now()->toDateTimeString(),
             'version' => config('app.version', '1.0.0'),
             'php_version' => PHP_VERSION,
+            'mode' => $mode,
         ]));
 
         // Clear all caches
@@ -178,7 +310,7 @@ class InstallController extends Controller
         Artisan::call('cache:clear');
         Artisan::call('view:clear');
 
-        return view('install.complete');
+        return view('install.complete', compact('mode', 'accounts', 'demoCredentials'));
     }
 
     /**
