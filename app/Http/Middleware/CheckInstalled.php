@@ -11,6 +11,7 @@ class CheckInstalled
 {
     /**
      * Redirect to installer if not installed, or block installer if already installed.
+     * Also switches to file-based sessions during installation to avoid DB dependency.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -21,11 +22,17 @@ class CheckInstalled
             if ($isInstalled) {
                 return redirect('/');
             }
+
+            // Switch to file session during installation (database may not exist yet)
+            config(['session.driver' => 'file']);
+
             return $next($request);
         }
 
         // If accessing app routes but not installed
         if (!$isInstalled) {
+            // Switch to file session for the redirect too
+            config(['session.driver' => 'file']);
             return redirect()->route('install.requirements');
         }
 

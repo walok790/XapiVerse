@@ -114,6 +114,9 @@ class InstallController extends Controller
             return back()->withErrors(['db_error' => 'Migration failed: ' . $e->getMessage()]);
         }
 
+        // Switch session to database now that tables exist
+        $this->setEnvValue('SESSION_DRIVER', 'database');
+
         return redirect()->route('install.mode');
     }
 
