@@ -19,6 +19,7 @@ Route::prefix('install')->group(function () {
     Route::post('/mode', [InstallController::class, 'saveMode'])->name('install.save-mode');
     Route::get('/database', [InstallController::class, 'database'])->name('install.database');
     Route::post('/database', [InstallController::class, 'saveDatabase'])->name('install.save-database');
+    Route::post('/database/run-step', [InstallController::class, 'runStep'])->name('install.run-step');
     Route::get('/database/download-sql', [InstallController::class, 'downloadSql'])->name('install.download-sql');
     Route::get('/account', [InstallController::class, 'account'])->name('install.account');
     Route::post('/account', [InstallController::class, 'saveAccount'])->name('install.save-account');

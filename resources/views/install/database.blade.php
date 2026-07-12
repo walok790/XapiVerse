@@ -15,89 +15,152 @@
         </div>
     @endif
 
-    @if($errors->any())
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            @foreach($errors->all() as $error)
-                <p class="text-sm text-red-700">{{ $error }}</p>
-            @endforeach
-        </div>
-    @endif
+    <div id="errorBox" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <p id="errorText" class="text-sm text-red-700"></p>
+    </div>
 
-    <form id="dbForm" method="POST" action="{{ route('install.save-database') }}" class="space-y-4">
-        @csrf
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
-                <input type="text" name="db_host" value="{{ old('db_host', '127.0.0.1') }}" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
-                <input type="number" name="db_port" value="{{ old('db_port', '3306') }}" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-            </div>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Database Name</label>
-            <input type="text" name="db_name" value="{{ old('db_name', 'xapiverse_db') }}" required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-            <p class="mt-1 text-xs text-gray-400">Auto-created if it doesn't exist.</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" name="db_user" value="{{ old('db_user', 'root') }}" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" name="db_password" value="{{ old('db_password') }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Empty if none">
-            </div>
-        </div>
-
-        <div class="p-3 bg-gray-50 rounded-lg">
-            <p class="text-xs text-gray-500"><strong>XAMPP:</strong> Host <code>127.0.0.1</code> · Port <code>3306</code> · User <code>root</code> · Pass <em>(empty)</em></p>
-        </div>
-
-        <!-- Loading (hidden by default, shown after submit) -->
-        <div id="loadingBox" class="hidden p-4 bg-brand-50 border border-brand-200 rounded-lg">
-            <div class="flex items-center space-x-3">
-                <svg class="w-5 h-5 text-brand-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+    <!-- Form (hidden during install) -->
+    <div id="formSection">
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <p class="text-sm font-medium text-brand-800">Installing database...</p>
-                    <p class="text-xs text-brand-600">Creating tables. Please wait.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
+                    <input type="text" id="db_host" value="127.0.0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
+                    <input type="number" id="db_port" value="3306" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Database Name</label>
+                <input type="text" id="db_name" value="xapiverse_db" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                <p class="mt-1 text-xs text-gray-400">Create this database in phpMyAdmin first.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="db_user" value="root" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="db_password" value="" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Empty if none">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-500"><strong>XAMPP:</strong> Host <code>127.0.0.1</code> · Port <code>3306</code> · User <code>root</code> · Pass <em>(empty)</em></p>
+            </div>
         </div>
 
-        <div class="flex justify-between pt-2">
-            <a href="{{ route('install.mode') }}" id="backBtn" class="inline-flex items-center px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900">
+        <div class="flex justify-between pt-4">
+            <a href="{{ route('install.mode') }}" class="inline-flex items-center px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900">
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Back
             </a>
-            <button type="submit" id="submitBtn" class="inline-flex items-center px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+            <button onclick="startInstall()" id="installBtn" class="inline-flex items-center px-6 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
                 {{ $mode === 'demo' ? 'Install & Finish' : 'Import & Next' }}
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </button>
         </div>
-    </form>
+    </div>
+
+    <!-- Progress (shown during install) -->
+    <div id="progressSection" class="hidden">
+        <div class="text-center py-6">
+            <svg class="w-10 h-10 text-brand-600 animate-spin mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p id="stepMessage" class="text-sm font-medium text-gray-800 mb-2">Starting installation...</p>
+            <div class="w-full max-w-xs mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="stepDetail" class="text-xs text-gray-500 mt-2">Step 0 of 0</p>
+        </div>
+    </div>
 </div>
 
 <script>
-document.getElementById('dbForm').addEventListener('submit', function() {
-    // Show loading AFTER form submits (setTimeout ensures form data is sent first)
-    setTimeout(function() {
-        document.getElementById('loadingBox').classList.remove('hidden');
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').classList.add('opacity-50');
-        document.getElementById('submitBtn').innerHTML = '<svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Installing...';
-        document.getElementById('backBtn').style.display = 'none';
-    }, 100);
-});
+async function startInstall() {
+    var host = document.getElementById('db_host').value;
+    var port = document.getElementById('db_port').value;
+    var name = document.getElementById('db_name').value;
+    var user = document.getElementById('db_user').value;
+    var pass = document.getElementById('db_password').value;
+
+    if (!host || !port || !name || !user) {
+        showError('Please fill in all required fields.');
+        return;
+    }
+
+    // Hide form, show progress
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('progressSection').classList.remove('hidden');
+    document.getElementById('errorBox').classList.add('hidden');
+
+    var step = 0;
+    var total = 18;
+
+    while (true) {
+        updateProgress(step, total, 'Installing...');
+
+        try {
+            var response = await fetch('{{ route("install.run-step") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    step: step,
+                    db_host: host,
+                    db_port: port,
+                    db_name: name,
+                    db_user: user,
+                    db_password: pass
+                })
+            });
+
+            var data = await response.json();
+
+            if (!data.success) {
+                showError(data.error || 'Unknown error');
+                document.getElementById('formSection').style.display = 'block';
+                document.getElementById('progressSection').classList.add('hidden');
+                return;
+            }
+
+            updateProgress(step + 1, data.total || total, data.message);
+            total = data.total || total;
+
+            if (data.done) {
+                document.getElementById('stepMessage').textContent = 'Installation complete!';
+                document.getElementById('progressBar').style.width = '100%';
+                setTimeout(function() {
+                    window.location.href = data.redirect;
+                }, 1000);
+                return;
+            }
+
+            step = data.next;
+        } catch (err) {
+            showError('Network error: ' + err.message + '. Please try again.');
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('progressSection').classList.add('hidden');
+            return;
+        }
+    }
+}
+
+function updateProgress(current, total, message) {
+    var pct = Math.round((current / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('stepMessage').textContent = message;
+    document.getElementById('stepDetail').textContent = 'Step ' + current + ' of ' + total;
+}
+
+function showError(msg) {
+    document.getElementById('errorBox').classList.remove('hidden');
+    document.getElementById('errorText').textContent = msg;
+}
 </script>
 @endsection
