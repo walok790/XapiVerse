@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes (v1)
+| These will be built in Phase 4 - Developer Platform
+|--------------------------------------------------------------------------
+|
+| Prefix: /api/v1
+| Middleware: api.auth (ApiAuthenticate)
+|
+| Future endpoints:
+| POST /api/v1/terabox/download
+| POST /api/v1/terabox/stream
+| POST /api/v1/twitter/media
+| etc.
+|
+*/
+
+Route::prefix('v1')->group(function () {
+    // Public - health check
+    Route::get('/health', function () {
+        return response()->json([
+            'status' => 'ok',
+            'version' => '1.0.0',
+            'timestamp' => now()->toISOString(),
+        ]);
+    });
+
+    // Protected API routes (require API key)
+    Route::middleware('api.auth')->group(function () {
+        // Account info
+        Route::get('/me', function (\Illuminate\Http\Request $request) {
+            $apiKey = $request->attributes->get('api_key');
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'name' => $apiKey->user->name,
+                    'email' => $apiKey->user->email,
+                    'credits_remaining' => $apiKey->credits_balance,
+                    'total_used' => $apiKey->total_used,
+                    'rate_limit' => $apiKey->rate_limit_per_minute,
+                ],
+            ]);
+        });
+
+        // API service endpoints will be added in Phase 4
+        // Route::post('/terabox/download', [TeraboxApiController::class, 'download']);
+        // Route::post('/terabox/stream', [TeraboxApiController::class, 'stream']);
+    });
+});
