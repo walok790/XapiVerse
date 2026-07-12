@@ -94,6 +94,9 @@ class InstallController extends Controller
      */
     public function saveDatabase(Request $request)
     {
+        // Increase timeout for SQL import (XAMPP default is 30 seconds)
+        set_time_limit(300);
+
         $request->validate([
             'db_host' => 'required|string',
             'db_port' => 'required|numeric',
@@ -129,13 +132,12 @@ class InstallController extends Controller
             return back()->withErrors(['db_error' => 'Cannot create/select database: ' . $e->getMessage()]);
         }
 
-        // 3. Import tables SQL
+        // 3. Import tables SQL (execute statement by statement)
         try {
             $sqlFile = base_path('database/sql/tables.sql');
             $sql = File::get($sqlFile);
-            $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
-            $pdo->exec($sql);
-        } catch (\PDOException $e) {
+            $this->executeSqlStatements($pdo, $sql);
+        } catch (\Exception $e) {
             return back()->withErrors(['db_error' => 'Table import failed: ' . $e->getMessage()]);
         }
 
@@ -147,8 +149,8 @@ class InstallController extends Controller
                 // Replace password placeholder with real bcrypt hash
                 $hash = password_hash('password', PASSWORD_BCRYPT, ['cost' => 12]);
                 $demoSql = str_replace('$2y$12$YourHashWillBeReplacedByInstaller', $hash, $demoSql);
-                $pdo->exec($demoSql);
-            } catch (\PDOException $e) {
+                $this->executeSqlStatements($pdo, $demoSql);
+            } catch (\Exception $e) {
                 return back()->withErrors(['db_error' => 'Demo data import failed: ' . $e->getMessage()]);
             }
         }
@@ -276,6 +278,60 @@ class InstallController extends Controller
             }
         }
         return $env;
+    }
+
+    /**
+     * Execute SQL file by splitting into individual statements
+     * This avoids ERR_CONNECTION_RESET on XAMPP/shared hosting
+     */
+    private function executeSqlStatements(\PDO $pdo, string $sql): void
+    {
+        // Remove comments
+        $sql = preg_replace('/--.*$/m', '', $sql);
+        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
+
+        // Split by semicolons (but not inside quotes)
+        $statements = [];
+        $current = '';
+        $inString = false;
+        $stringChar = '';
+
+        for ($i = 0; $i < strlen($sql); $i++) {
+            $char = $sql[$i];
+
+            if ($inString) {
+                $current .= $char;
+                if ($char === $stringChar && ($i === 0 || $sql[$i - 1] !== '\\')) {
+                    $inString = false;
+                }
+            } else {
+                if ($char === '\'' || $char === '"') {
+                    $inString = true;
+                    $stringChar = $char;
+                    $current .= $char;
+                } elseif ($char === ';') {
+                    $stmt = trim($current);
+                    if ($stmt !== '') {
+                        $statements[] = $stmt;
+                    }
+                    $current = '';
+                } else {
+                    $current .= $char;
+                }
+            }
+        }
+
+        // Don't forget last statement without semicolon
+        $stmt = trim($current);
+        if ($stmt !== '') {
+            $statements[] = $stmt;
+        }
+
+        // Execute each statement
+        foreach ($statements as $statement) {
+            if (empty($statement)) continue;
+            $pdo->exec($statement);
+        }
     }
 
     private function checkPermission(string $path): bool
