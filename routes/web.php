@@ -103,10 +103,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:developer'])->prefix('developer')->name('developer.')->group(function () {
-    Route::get('/', function () { return view('developer.dashboard'); })->name('dashboard');
-    Route::get('/api-keys', function () { return view('developer.dashboard'); })->name('api-keys.index');
-    Route::get('/docs', function () { return view('developer.dashboard'); })->name('docs');
-    Route::get('/credits', function () { return view('developer.dashboard'); })->name('credits');
+    Route::get('/', [App\Http\Controllers\Developer\DashboardController::class, 'index'])->name('dashboard');
+
+    // API Keys
+    Route::get('/api-keys', [App\Http\Controllers\Developer\ApiKeyController::class, 'index'])->name('api-keys.index');
+    Route::post('/api-keys', [App\Http\Controllers\Developer\ApiKeyController::class, 'store'])->name('api-keys.store');
+    Route::delete('/api-keys/{apiKey}', [App\Http\Controllers\Developer\ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
+    Route::patch('/api-keys/{apiKey}/toggle', [App\Http\Controllers\Developer\ApiKeyController::class, 'toggle'])->name('api-keys.toggle');
+
+    // Documentation
+    Route::get('/docs', [App\Http\Controllers\Developer\DocsController::class, 'index'])->name('docs');
+    Route::get('/docs/{slug}', [App\Http\Controllers\Developer\DocsController::class, 'show'])->name('docs.show');
+
+    // Credits
+    Route::get('/credits', [App\Http\Controllers\Developer\CreditController::class, 'index'])->name('credits');
+    Route::post('/credits/purchase', [App\Http\Controllers\Developer\CreditController::class, 'purchase'])->name('credits.purchase');
 });
 
 /*
