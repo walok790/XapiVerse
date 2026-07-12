@@ -16,22 +16,53 @@
         }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>body{font-family:'Inter',sans-serif}h1,h2,h3,h4,h5,h6{font-family:'Plus Jakarta Sans',sans-serif}[x-cloak]{display:none!important}</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1,h2,h3,h4,h5,h6 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        [x-cloak] { display: none !important; }
+
+
+        @keyframes float-logo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes checkmark-pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .animate-float-logo { animation: float-logo 3s ease-in-out infinite; }
+        .animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+        .animate-checkmark { animation: checkmark-pop 0.3s ease-out forwards; }
+        .dot-bg {
+            background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-3xl">
-        <!-- Logo -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center space-x-2">
-                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center">
-                    <span class="text-white font-bold text-lg">X</span>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 relative">
+    <!-- Dot Pattern Background -->
+    <div class="absolute inset-0 dot-bg opacity-50"></div>
+
+    <div class="w-full max-w-3xl relative z-10">
+        <!-- Logo with float animation -->
+        <div class="text-center mb-10">
+            <div class="inline-flex flex-col items-center">
+                <div class="animate-float-logo mb-3">
+                    <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl shadow-purple-500/30 border border-purple-400/20">
+                        <span class="text-white font-bold text-2xl">X</span>
+                    </div>
                 </div>
                 <span class="font-jakarta font-bold text-2xl text-gray-900">XapiVerse</span>
+                <p class="text-gray-500 mt-1 text-sm">Installation Wizard</p>
             </div>
-            <p class="text-gray-500 mt-2">Installation Wizard</p>
         </div>
 
-        <!-- Steps -->
+        <!-- Steps Indicator -->
         @php
             $steps = [
                 ['name' => 'Requirements', 'route' => 'install.requirements'],
@@ -42,35 +73,62 @@
             ];
             $currentStep = collect($steps)->search(fn($s) => request()->routeIs($s['route']));
             if ($currentStep === false) $currentStep = 0;
+            $progressPercent = ($currentStep / (count($steps) - 1)) * 100;
         @endphp
-        <div class="mb-8">
-            <div class="flex items-center justify-between">
+
+
+        <div class="mb-10 px-4">
+            <div class="flex items-center justify-between relative">
+                {{-- Progress line background --}}
+                <div class="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 rounded-full"></div>
+                {{-- Progress line filled --}}
+                <div class="absolute top-4 left-0 h-0.5 bg-gradient-to-r from-green-500 to-brand-500 rounded-full transition-all duration-700 ease-out" style="width: {{ $progressPercent }}%"></div>
+
                 @foreach($steps as $index => $step)
-                    <div class="flex items-center {{ $index < count($steps) - 1 ? 'flex-1' : '' }}">
-                        <div class="flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold {{ $index < $currentStep ? 'bg-green-500 text-white' : ($index === $currentStep ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-500') }}">
-                                @if($index < $currentStep)
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                @else
-                                    {{ $index + 1 }}
-                                @endif
-                            </div>
-                            <span class="text-xs mt-1 whitespace-nowrap {{ $index === $currentStep ? 'text-brand-600 font-medium' : 'text-gray-500' }}">{{ $step['name'] }}</span>
-                        </div>
-                        @if($index < count($steps) - 1)
-                            <div class="flex-1 h-0.5 mx-1 sm:mx-2 mt-[-12px] {{ $index < $currentStep ? 'bg-green-500' : 'bg-gray-200' }}"></div>
-                        @endif
+                <div class="relative flex flex-col items-center z-10">
+                    @if($index < $currentStep)
+                    {{-- Completed --}}
+                    <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 animate-checkmark">
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                     </div>
+                    @elseif($index === $currentStep)
+                    {{-- Current step with glow ring --}}
+                    <div class="relative">
+                        <div class="absolute inset-0 rounded-full bg-brand-400 animate-pulse-ring opacity-30"></div>
+                        <div class="relative w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-lg shadow-brand-500/40 ring-4 ring-brand-100">
+                            <span class="text-white font-bold text-xs">{{ $index + 1 }}</span>
+                        </div>
+                    </div>
+                    @else
+                    {{-- Upcoming --}}
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-100">
+                        <span class="text-gray-400 font-semibold text-xs">{{ $index + 1 }}</span>
+                    </div>
+                    @endif
+                    <span class="text-[11px] mt-2 whitespace-nowrap font-medium {{ $index === $currentStep ? 'text-brand-600' : ($index < $currentStep ? 'text-green-600' : 'text-gray-400') }}">{{ $step['name'] }}</span>
+                </div>
                 @endforeach
+            </div>
+
+            {{-- Progress text --}}
+            <div class="text-center mt-4">
+                <span class="text-xs text-gray-500">Step {{ $currentStep + 1 }} of {{ count($steps) }}</span>
+                <span class="text-xs text-gray-400 mx-1">&middot;</span>
+                <span class="text-xs font-medium text-brand-600">{{ round($progressPercent) }}% complete</span>
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+        <!-- Content Card -->
+        <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden transition-shadow duration-300 hover:shadow-2xl hover:shadow-gray-200/70"
+             x-data x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
             @yield('content')
         </div>
 
-        <div class="text-center mt-6 text-sm text-gray-400">XapiVerse v1.0.0</div>
+        <!-- Footer -->
+        <div class="text-center mt-8">
+            <p class="text-xs text-gray-400">XapiVerse v1.0.0</p>
+        </div>
     </div>
 </body>
 </html>

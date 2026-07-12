@@ -54,8 +54,11 @@ Route::prefix('v1')->group(function () {
             ]);
         });
 
-        // API service endpoints will be added in Phase 4
-        // Route::post('/terabox/download', [TeraboxApiController::class, 'download']);
-        // Route::post('/terabox/stream', [TeraboxApiController::class, 'stream']);
+        // Generic proxy: forwards to any registered service
+        // POST /api/v1/terabox/download  →  forwards to TeraBox source
+        // POST /api/v1/twitter/media     →  forwards to Twitter source
+        // GET  /api/v1/terabox/info      →  forwards to TeraBox source
+        Route::any('/{service}/{endpoint?}', [\App\Http\Controllers\Api\V1\ProxyController::class, 'handle'])
+            ->where('endpoint', '.*');
     });
 });
