@@ -23,27 +23,6 @@
         </div>
     @endif
 
-    <!-- Loading Overlay -->
-    <div x-show="loading" x-cloak class="fixed inset-0 z-50 bg-gray-900/60 flex items-center justify-center">
-        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
-            <!-- Spinner -->
-            <div class="mx-auto w-16 h-16 mb-4 relative">
-                <div class="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-brand-600 border-t-transparent animate-spin"></div>
-            </div>
-            <h3 class="font-jakarta font-bold text-lg text-gray-900 mb-2">Installing Database...</h3>
-            <p class="text-sm text-gray-500 mb-1">Creating tables and importing data.</p>
-            <p class="text-xs text-gray-400">Please wait, do not close this page.</p>
-
-            <!-- Progress dots animation -->
-            <div class="flex justify-center space-x-1.5 mt-4">
-                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                <div class="w-2 h-2 bg-brand-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-            </div>
-        </div>
-    </div>
-
     <form method="POST" action="{{ route('install.save-database') }}" class="space-y-5" @submit="loading = true">
         @csrf
 
@@ -85,6 +64,19 @@
             <p class="text-xs text-gray-600"><strong>XAMPP:</strong> Host=<code>127.0.0.1</code> Port=<code>3306</code> User=<code>root</code> Pass=<em>(empty)</em></p>
         </div>
 
+        <!-- Bottom Loading Bar (shows when installing) -->
+        <div x-show="loading" x-cloak class="mt-4 p-4 bg-brand-50 border border-brand-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-brand-800">Installing database...</span>
+                <span class="text-xs text-brand-600">Please wait</span>
+            </div>
+            <!-- Animated progress bar -->
+            <div class="w-full h-2 bg-brand-100 rounded-full overflow-hidden">
+                <div class="h-full bg-brand-600 rounded-full animate-pulse" style="width: 100%; animation: progressMove 2s ease-in-out infinite;"></div>
+            </div>
+            <p class="text-xs text-brand-600 mt-2">Creating tables and importing data. Do not close this page.</p>
+        </div>
+
         <div class="flex justify-between pt-2">
             <a href="{{ route('install.mode') }}" x-show="!loading" class="inline-flex items-center px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -111,4 +103,12 @@
         </div>
     </form>
 </div>
+
+<style>
+    @keyframes progressMove {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(0%); }
+        100% { transform: translateX(100%); }
+    }
+</style>
 @endsection
